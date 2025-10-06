@@ -1,0 +1,134 @@
+[
+  {
+    "id": "1",
+    "title": "Plantation de Mil",
+    "description": "Début de la plantation dans la parcelle Nord. Préparer les semences et vérifier le système d'irrigation.",
+    "date": "2025-10-05",
+    "startTime": "08:00",
+    "endTime": "12:00",
+    "category": "agricultural",
+    "location": "Parcelle Nord",
+    "weatherImpact": true,
+    "alertWeather": "Température idéale, pas de pluie prévue"
+  },
+  {
+    "id": "2",
+    "title": "Irrigation Maïs",
+    "description": "Système d'irrigation à vérifier et maintenance préventive",
+    "date": "2025-10-06",
+    "startTime": "06:00",
+    "endTime": "09:00",
+    "category": "agricultural",
+    "location": "Parcelle Est",
+    "weatherImpact": true,
+    "alertWeather": "Température élevée, irrigation nécessaire"
+  },
+  {
+    "id": "3",
+    "title": "Risque de pluie intense",
+    "description": "Pluies abondantes prévues. Reporter les activités sensibles.",
+    "date": "2025-10-08",
+    "startTime": "14:00",
+    "endTime": "18:00",
+    "category": "weather",
+    "weatherImpact": true,
+    "alertWeather": "Alerte pluie: 80mm attendus"
+  },
+  {
+    "id": "4",
+    "title": "Fertilisation Arachide",
+    "description": "Application d'engrais organique sur la parcelle Ouest",
+    "date": "2025-10-10",
+    "startTime": "07:00",
+    "endTime": "11:00",
+    "category": "agricultural",
+    "location": "Parcelle Ouest",
+    "weatherImpact": true
+  },
+  {
+    "id": "5",
+    "title": "Traitement phytosanitaire",
+    "description": "Traitement contre les parasites - Tomates",
+    "date": "2025-10-12",
+    "startTime": "06:00",
+    "endTime": "08:00",
+    "category": "agricultural",
+    "location": "Serre B",
+    "weatherImpact": true,
+    "alertWeather": "Éviter si vent > 15 km/h"
+  },
+  {
+    "id": "6",
+    "title": "Récolte Arachide",
+    "description": "Début de la récolte - Prévoir main d'œuvre supplémentaire",
+    "date": "2025-10-15",
+    "startTime": "07:00",
+    "endTime": "16:00",
+    "category": "agricultural",
+    "location": "Parcelle Ouest"
+  },
+  {
+    "id": "7",
+    "title": "Canicule attendue",
+    "description": "Températures exceptionnellement élevées. Augmenter l'irrigation.",
+    "date": "2025-10-18",
+    "startTime": "12:00",
+    "endTime": "18:00",
+    "category": "weather",
+    "weatherImpact": true,
+    "alertWeather": "Température max: 42°C"
+  },
+  {
+    "id": "8",
+    "title": "Inspection des parcelles",
+    "description": "Visite de contrôle qualité et état des cultures",
+    "date": "2025-10-20",
+    "startTime": "09:00",
+    "endTime": "12:00",
+    "category": "reminder",
+    "location": "Toutes parcelles"
+  },
+  {
+    "id": "9",
+    "title": "Formation irrigation goutte-à-goutte",
+    "description": "Session de formation pour le nouveau système d'irrigation",
+    "date": "2025-10-22",
+    "startTime": "14:00",
+    "endTime": "17:00",
+    "category": "personal",
+    "location": "Centre de formation"
+  },
+  {
+    "id": "10",
+    "title": "Récolte Mil",
+    "description": "Grande récolte de mil - Mobiliser toute l'équipe",
+    "date": "2025-10-25",
+    "startTime": "06:00",
+    "endTime": "18:00",
+    "category": "agricultural",
+    "location": "Parcelle Nord",
+    "weatherImpact": true,
+    "alertWeather": "Conditions optimales"
+  },
+  {
+    "id": "11",
+    "title": "Vents forts",
+    "description": "Rafales attendues jusqu'à 60 km/h. Sécuriser les installations.",
+    "date": "2025-10-28",
+    "startTime": "10:00",
+    "endTime": "16:00",
+    "category": "weather",
+    "weatherImpact": true,
+    "alertWeather": "Alerte vent: jusqu'à 60 km/h"
+  },
+  {
+    "id": "12",
+    "title": "Livraison semences",
+    "description": "Réception des semences de tomates pour la saison prochaine",
+    "date": "2025-10-30",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "category": "reminder",
+    "location": "Entrepôt principal"
+  }
+]

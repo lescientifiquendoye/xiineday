@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "type": "Mariage",
+    "duration": 8,
+    "idealConditions": {
+      "tempMin": 22,
+      "tempMax": 30,
+      "precipitationMax": 10,
+      "windSpeedMax": 15,
+      "description": "Temps sec et agréable"
+    }
+  },
+  {
+    "id": 2,
+    "type": "Concert en plein air",
+    "duration": 4,
+    "idealConditions": {
+      "tempMin": 20,
+      "tempMax": 32,
+      "precipitationMax": 5,
+      "windSpeedMax": 20,
+      "description": "Pas de pluie, vent modéré"
+    }
+  },
+  {
+    "id": 3,
+    "type": "Match de football",
+    "duration": 3,
+    "idealConditions": {
+      "tempMin": 18,
+      "tempMax": 35,
+      "precipitationMax": 20,
+      "windSpeedMax": 25,
+      "description": "Conditions sportives acceptables"
+    }
+  },
+  {
+    "id": 4,
+    "type": "Pique-nique",
+    "duration": 4,
+    "idealConditions": {
+      "tempMin": 20,
+      "tempMax": 28,
+      "precipitationMax": 5,
+      "windSpeedMax": 12,
+      "description": "Temps calme et ensoleillé"
+    }
+  },
+  {
+    "id": 5,
+    "type": "Randonnée",
+    "duration": 6,
+    "idealConditions": {
+      "tempMin": 15,
+      "tempMax": 30,
+      "precipitationMax": 15,
+      "windSpeedMax": 18,
+      "description": "Temps sec, pas trop chaud"
+    }
+  },
+  {
+    "id": 6,
+    "type": "Festival",
+    "duration": 12,
+    "idealConditions": {
+      "tempMin": 18,
+      "tempMax": 32,
+      "precipitationMax": 10,
+      "windSpeedMax": 20,
+      "description": "Journée stable et agréable"
+    }
+  }
+]

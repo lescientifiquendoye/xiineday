@@ -1,0 +1,1243 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Sprout,
+  Droplets,
+  AlertTriangle,
+  TrendingUp,
+  Calendar,
+  MapPin,
+  BarChart3,
+  ThermometerSun,
+  Wind,
+  CloudRain,
+  Sun,
+  Activity,
+  Leaf,
+  ArrowUp,
+  ArrowDown,
+  Info
+} from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { DynamicParcelMap as ParcelMap } from '@/components/DynamicParcelMap';
+import MyFieldSection from '@/components/MyFieldSection';
+import { getWeather, getCrops, getAllLocations, getParcels, WeatherData, CropData, Parcel } from '@/lib/api';
+import { useAppStore } from '@/lib/store';
+// @ts-ignore
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, BarChart, Cell, Area, AreaChart } from 'recharts';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+
+interface Subscription {
+  id: string;
+  plan_name: string;
+  status: string;
+}
+
+export default function ProPage() {
+  const router = useRouter();
+  const { selectedLocation, setSelectedLocation } = useAppStore();
+  const [locations, setLocations] = useState<string[]>([]);
+  const [crops, setCrops] = useState<CropData[]>([]);
+  const [selectedCrop, setSelectedCrop] = useState<CropData | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [parcels, setParcels] = useState<Parcel[]>([]);
+  const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+
+        setSubscription(data);
+        loadData();
+        
+      } else {
+     //   router.push('/subscription?redirect=/pro');
+      }
+      setLoading(false);
+    };
+
+    const loadData = async () => {
+      const locs = await getAllLocations();
+      const cropsData = await getCrops();
+      const parcelsData = await getParcels();
+      setLocations(locs);
+      setCrops(cropsData);
+      setParcels(parcelsData);
+      if (cropsData.length > 0) {
+        setSelectedCrop(cropsData[0]);
+      }
+    };
+
+    checkSubscription();
+  }, [router]);
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      const data = await getWeather(selectedLocation);
+      setWeather(data || null);
+    };
+    loadWeather();
+  }, [selectedLocation]);
+
+  const calculateIrrigationNeed = () => {
+    if (!weather || !selectedCrop) return 0;
+    const avgHumidity = weather.forecast.reduce((sum, day) => sum + day.humidity, 0) / weather.forecast.length;
+    const avgPrecipitation = weather.forecast.reduce((sum, day) => sum + day.precipitation, 0) / weather.forecast.length;
+
+    if (avgHumidity > 70 && avgPrecipitation > 50) return 20;
+    if (avgHumidity > 60 && avgPrecipitation > 30) return 40;
+    if (avgHumidity > 50) return 60;
+    return 85;
+  };
+
+  const getAlerts = (): Array<{ type: string; priority: 'high' | 'medium' | 'low'; message: string; icon: any; action: string }> => {
+    if (!weather) return [];
+    const alerts: Array<{ type: string; priority: 'high' | 'medium' | 'low'; message: string; icon: any; action: string }> = [];
+
+    weather.forecast.forEach((day) => {
+      if (day.precipitation > 70) {
+        alerts.push({
+          type: 'Pluie intense',
+          priority: 'high',
+          message: `Fortes pluies prévues ${day.day} - Risque d'inondation et de lessivage des nutriments`,
+          icon: CloudRain,
+          action: 'Protéger les cultures sensibles et reporter les traitements',
+        });
+      }
+      if (day.tempMax > 35) {
+        alerts.push({
+          type: 'Canicule',
+          priority: 'high',
+          message: `Températures élevées ${day.day} (${day.tempMax}°C) - Stress hydrique probable`,
+          icon: ThermometerSun,
+          action: 'Augmenter la fréquence d\'irrigation, privilégier tôt le matin',
+        });
+      }
+      if (day.windSpeed > 25) {
+        alerts.push({
+          type: 'Vent fort',
+          priority: 'medium',
+          message: `Vents forts ${day.day} (${day.windSpeed} km/h) - Risque de casse et dessèchement`,
+          icon: Wind,
+          action: 'Vérifier les tuteurs et protections, reporter les pulvérisations',
+        });
+      }
+      if (day.tempMin < 10) {
+        alerts.push({
+          type: 'Froid',
+          priority: 'medium',
+          message: `Températures basses ${day.day} (${day.tempMin}°C) - Risque de ralentissement de croissance`,
+          icon: ThermometerSun,
+          action: 'Protéger les cultures sensibles au froid',
+        });
+      }
+    });
+
+    return alerts.slice(0, 6).sort((a, b) => {
+      const priority = { high: 0, medium: 1, low: 2 };
+      return priority[a.priority] - priority[b.priority];
+    });
+  };
+
+  const getPlantingRecommendation = () => {
+    if (!weather || !selectedCrop) return null;
+
+    const avgTemp = weather.forecast.reduce((sum, day) => sum + (day.tempMax + day.tempMin) / 2, 0) / weather.forecast.length;
+    const totalRain = weather.forecast.reduce((sum, day) => sum + day.precipitation, 0);
+
+    const tempOk = avgTemp >= selectedCrop.idealConditions.tempMin && avgTemp <= selectedCrop.idealConditions.tempMax;
+    const rainAdequate = totalRain > 10;
+
+    let score = 0;
+    if (tempOk) score += 50;
+    if (rainAdequate) score += 30;
+    if (avgTemp > selectedCrop.idealConditions.tempMin + 2 && avgTemp < selectedCrop.idealConditions.tempMax - 2) score += 20;
+
+    if (score >= 80) {
+      return { status: 'excellent', message: 'Conditions optimales pour la plantation', score, color: 'green' };
+    } else if (score >= 60) {
+      return { status: 'good', message: 'Conditions favorables pour la plantation', score, color: 'blue' };
+    } else if (score >= 40) {
+      return { status: 'average', message: 'Conditions acceptables - surveillance recommandée', score, color: 'yellow' };
+    } else {
+      return { status: 'poor', message: 'Conditions défavorables - reporter la plantation', score, color: 'red' };
+    }
+  };
+
+  const calculateFieldHealthScore = () => {
+    if (!parcels.length) return 0;
+    const avgMoisture = parcels.reduce((sum, p) => sum + p.soilMoisture, 0) / parcels.length;
+    const avgIrrigation = parcels.reduce((sum, p) => sum + p.irrigationNeed, 0) / parcels.length;
+    return Math.round(100 - (avgIrrigation * 0.6) + (avgMoisture * 0.4));
+  };
+
+  const getTotalArea = () => parcels.reduce((sum, p) => sum + p.area, 0);
+
+  const getCriticalParcels = () => parcels.filter(p => p.irrigationNeed > 70 || p.alerts.length > 0);
+
+  const irrigationNeed = calculateIrrigationNeed();
+  const alerts = getAlerts();
+  const plantingRec = getPlantingRecommendation();
+  const fieldHealth = calculateFieldHealthScore();
+  const totalArea = getTotalArea();
+  const criticalParcels = getCriticalParcels();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Vérification de votre abonnement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subscription) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-8"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 shadow-lg">
+                <Sprout className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  XiineDay Pro
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">Tableau de bord agricole intelligent</p>
+              </div>
+            </div>
+
+            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+              <SelectTrigger className="w-full sm:w-[280px] border-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {location}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="border-2 bg-gradient-to-br from-green-500 to-emerald-600 text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="text-white flex items-center gap-2 text-base sm:text-lg">
+                    <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
+                    Santé Globale
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                  <div className="flex items-end gap-2 mb-2">
+                    <div className="text-4xl sm:text-5xl font-bold">{fieldHealth}</div>
+                    <div className="text-xl sm:text-2xl mb-1">/100</div>
+                  </div>
+                  <Progress value={fieldHealth} className="h-2 bg-green-200" />
+                  <p className="text-green-100 text-sm mt-2">
+                    {fieldHealth >= 80 ? 'Excellent état' : fieldHealth >= 60 ? 'Bon état' : 'Surveillance nécessaire'}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Droplets className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                    Irrigation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl sm:text-3xl font-bold">{irrigationNeed}%</span>
+                      <Badge variant={irrigationNeed > 70 ? 'destructive' : irrigationNeed > 40 ? 'default' : 'secondary'}>
+                        {irrigationNeed > 70 ? 'Urgent' : irrigationNeed > 40 ? 'Modéré' : 'Faible'}
+                      </Badge>
+                    </div>
+                    <Progress value={irrigationNeed} className="h-2" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {irrigationNeed > 70 ? '2-3 fois/jour' : irrigationNeed > 40 ? '1 fois/jour' : 'Tous les 2-3 jours'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+                    Alertes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl sm:text-3xl font-bold">{alerts.length}</span>
+                      <Badge variant={alerts.length > 3 ? 'destructive' : alerts.length > 0 ? 'default' : 'secondary'}>
+                        {alerts.filter(a => a.priority === 'high').length} haute priorité
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      {alerts.slice(0, 2).map((alert, i) => (
+                        <div key={i} className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${alert.priority === 'high' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                          {alert.type}
+                        </div>
+                      ))}
+                      {alerts.length > 2 && (
+                        <p className="text-xs text-gray-500">+{alerts.length - 2} autres alertes</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="border-2 hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                    Parcelles
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl sm:text-3xl font-bold">{parcels.length}</span>
+                      <Badge variant={criticalParcels.length > 0 ? 'destructive' : 'secondary'}>
+                        {totalArea.toFixed(1)} ha
+                      </Badge>
+                    </div>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Critiques:</span>
+                        <span className="font-semibold text-orange-600">{criticalParcels.length}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Normales:</span>
+                        <span className="font-semibold text-green-600">{parcels.length - criticalParcels.length}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {weather && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sun className="h-5 w-5 text-yellow-600" />
+                    Conditions Météorologiques Actuelles
+                  </CardTitle>
+                  <CardDescription>{weather.city}, {weather.country} - {weather.current.condition}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30">
+                        <ThermometerSun className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Température</p>
+                        <p className="text-2xl font-bold">{weather.current.temp}°C</p>
+                        <p className="text-xs text-gray-500">Ressenti: {weather.current.feelsLike}°C</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30">
+                        <Droplets className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Humidité</p>
+                        <p className="text-2xl font-bold">{weather.current.humidity}%</p>
+                        <p className="text-xs text-gray-500">Pression: {weather.current.pressure} hPa</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/30 dark:to-blue-900/30">
+                        <Wind className="h-6 w-6 text-cyan-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Vent</p>
+                        <p className="text-2xl font-bold">{weather.current.windSpeed} km/h</p>
+                        <p className="text-xs text-gray-500">Direction: {weather.current.windDirection}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-900/30 dark:to-blue-900/30">
+                        <CloudRain className="h-6 w-6 text-sky-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Précipitations</p>
+                        <p className="text-2xl font-bold">{weather.current.precipitation}%</p>
+                        <p className="text-xs text-gray-500">UV Index: {weather.current.uvIndex}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full max-w-5xl grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-1">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Vue d'ensemble</TabsTrigger>
+              <TabsTrigger value="myfield" className="text-xs sm:text-sm">Mon Champ</TabsTrigger>
+              <TabsTrigger value="parcels" className="text-xs sm:text-sm">Parcelles</TabsTrigger>
+              <TabsTrigger value="irrigation" className="text-xs sm:text-sm">Irrigation</TabsTrigger>
+              <TabsTrigger value="crops" className="text-xs sm:text-sm">Cultures</TabsTrigger>
+              <TabsTrigger value="alerts" className="text-xs sm:text-sm">Alertes</TabsTrigger>
+              <TabsTrigger value="subscription" className="text-xs sm:text-sm">Abonnement</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid lg:grid-cols-2 gap-6">
+                {weather && (
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Prévisions sur 7 jours
+                      </CardTitle>
+                      <CardDescription>Températures et précipitations</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <AreaChart
+                          data={weather.forecast.map((day) => ({
+                            jour: day.day.substring(0, 3),
+                            min: day.tempMin,
+                            max: day.tempMax,
+                            pluie: day.precipitation,
+                          }))}
+                        >
+                          <defs>
+                            <linearGradient id="colorMax" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorMin" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                          <XAxis dataKey="jour" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Area
+                            type="monotone"
+                            dataKey="max"
+                            stroke="#ef4444"
+                            fillOpacity={1}
+                            fill="url(#colorMax)"
+                            strokeWidth={2}
+                            name="Temp Max (°C)"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="min"
+                            stroke="#3b82f6"
+                            fillOpacity={1}
+                            fill="url(#colorMin)"
+                            strokeWidth={2}
+                            name="Temp Min (°C)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {parcels.length > 0 && (
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        État des parcelles
+                      </CardTitle>
+                      <CardDescription>Humidité et besoins en irrigation</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart
+                          data={parcels.map((p) => ({
+                            name: p.name.length > 10 ? p.name.substring(0, 10) + '...' : p.name,
+                            humidite: p.soilMoisture,
+                            besoin: p.irrigationNeed,
+                          }))}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="humidite" fill="#22c55e" radius={[8, 8, 0, 0]} name="Humidité sol (%)" />
+                          <Bar dataKey="besoin" fill="#3b82f6" radius={[8, 8, 0, 0]} name="Besoin irrigation (%)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {alerts.length > 0 && (
+                <Card className="border-2 border-orange-200 dark:border-orange-900">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                      <AlertTriangle className="h-5 w-5" />
+                      Alertes Prioritaires
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {alerts.slice(0, 3).map((alert, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          className={`p-4 rounded-lg border-l-4 ${
+                            alert.priority === 'high'
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                              : 'bg-orange-50 dark:bg-orange-900/20 border-orange-500'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <alert.icon className="h-5 w-5 text-orange-600 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-semibold text-sm">{alert.type}</p>
+                                <Badge variant={alert.priority === 'high' ? 'destructive' : 'default'} className="text-xs">
+                                  {alert.priority === 'high' ? 'Haute priorité' : 'Moyenne priorité'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{alert.message}</p>
+                              <div className="flex items-start gap-2 text-xs bg-white/50 dark:bg-gray-800/50 p-2 rounded">
+                                <Info className="h-3 w-3 mt-0.5 text-blue-600" />
+                                <p className="text-gray-600 dark:text-gray-400">{alert.action}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="myfield" className="space-y-6">
+              <MyFieldSection crops={crops} />
+            </TabsContent>
+
+            <TabsContent value="parcels" className="space-y-6">
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle>Carte des parcelles agricoles</CardTitle>
+                  <CardDescription>
+                    Cliquez sur une parcelle pour voir les détails et recommandations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ParcelMap
+                    parcels={parcels}
+                    selectedParcel={selectedParcel}
+                    onParcelSelect={setSelectedParcel}
+                  />
+                </CardContent>
+              </Card>
+
+              {selectedParcel && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{selectedParcel.name}</span>
+                        <Badge variant="outline">{selectedParcel.crop}</Badge>
+                      </CardTitle>
+                      <CardDescription>{selectedParcel.area} hectares</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Droplets className="h-4 w-4 text-blue-600" />
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Humidité du sol</p>
+                          </div>
+                          <p className="text-3xl font-bold">{selectedParcel.soilMoisture}%</p>
+                          <Progress value={selectedParcel.soilMoisture} className="h-2" />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-orange-600" />
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Besoin irrigation</p>
+                          </div>
+                          <p className="text-3xl font-bold">{selectedParcel.irrigationNeed}%</p>
+                          <Progress value={selectedParcel.irrigationNeed} className="h-2" />
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-600" />
+                          <p className="font-semibold">Dates importantes</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <p className="text-gray-600 dark:text-gray-400 mb-1">Plantation</p>
+                            <p className="font-semibold">{new Date(selectedParcel.plantingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                          </div>
+                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-gray-600 dark:text-gray-400 mb-1">Récolte prévue</p>
+                            <p className="font-semibold">{new Date(selectedParcel.expectedHarvest).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {selectedParcel.alerts.length > 0 && (
+                        <div className="pt-4 border-t">
+                          <p className="font-semibold mb-3 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-orange-600" />
+                            Alertes actives ({selectedParcel.alerts.length})
+                          </p>
+                          <div className="space-y-2">
+                            {selectedParcel.alerts.map((alert, i) => (
+                              <div
+                                key={i}
+                                className={`p-3 rounded-lg text-sm border-l-4 ${
+                                  alert.type === 'warning'
+                                    ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500'
+                                    : alert.type === 'success'
+                                    ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
+                                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                                }`}
+                              >
+                                <p className="font-medium mb-1">{alert.type}</p>
+                                <p className="text-gray-600 dark:text-gray-400">{alert.message}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-green-600" />
+                        Recommandations Personnalisées
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Droplets className="h-5 w-5 text-blue-600" />
+                          <p className="font-semibold">Plan d'irrigation</p>
+                        </div>
+                        <p className="text-sm mb-3">{selectedParcel.recommendations.irrigation}</p>
+                        <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
+                          <Info className="h-3 w-3" />
+                          <span>Quantité: {selectedParcel.irrigationNeed > 70 ? '25-30' : selectedParcel.irrigationNeed > 40 ? '15-20' : '8-12'} L/m²</span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border-2 border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sun className="h-5 w-5 text-green-600" />
+                          <p className="font-semibold">Timing optimal</p>
+                        </div>
+                        <p className="text-sm mb-3">{selectedParcel.recommendations.timing}</p>
+                        <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-300">
+                          <Info className="h-3 w-3" />
+                          <span>Éviter les heures chaudes (11h-16h)</span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                          <p className="font-semibold">Évaluation des risques</p>
+                        </div>
+                        <p className="text-sm mb-3">{selectedParcel.recommendations.risk}</p>
+                        <div className="flex items-center gap-2 text-xs text-yellow-700 dark:text-yellow-300">
+                          <Info className="h-3 w-3" />
+                          <span>Surveillance quotidienne recommandée</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="irrigation" className="space-y-6">
+              {weather && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ThermometerSun className="h-5 w-5" />
+                        Évolution des températures
+                      </CardTitle>
+                      <CardDescription>Prévisions sur 7 jours avec min/max</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart
+                          data={weather.forecast.map((day) => ({
+                            jour: day.day.substring(0, 3),
+                            min: day.tempMin,
+                            max: day.tempMax,
+                            moy: (day.tempMin + day.tempMax) / 2,
+                          }))}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                          <XAxis dataKey="jour" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="max"
+                            stroke="#ef4444"
+                            strokeWidth={3}
+                            name="Max (°C)"
+                            dot={{ r: 4 }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="moy"
+                            stroke="#f59e0b"
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            name="Moy (°C)"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="min"
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            name="Min (°C)"
+                            dot={{ r: 4 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CloudRain className="h-5 w-5" />
+                        Précipitations prévues
+                      </CardTitle>
+                      <CardDescription>Ajustez l'irrigation en fonction</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart
+                          data={weather.forecast.map((day) => ({
+                            jour: day.day.substring(0, 3),
+                            precipitation: day.precipitation,
+                            humidite: day.humidity,
+                          }))}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                          <XAxis dataKey="jour" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="precipitation" radius={[8, 8, 0, 0]} name="Précipitations (%)">
+                            {weather.forecast.map((day, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={day.precipitation > 70 ? '#3b82f6' : day.precipitation > 40 ? '#60a5fa' : '#93c5fd'}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <Card className="border-2 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/10 dark:to-cyan-900/10">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Fréquence recommandée</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold mb-2 text-blue-600">
+                      {irrigationNeed > 70 ? '2-3x' : irrigationNeed > 40 ? '1x' : '0.5x'}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">par jour</p>
+                    <p className="text-xs text-gray-500 mt-3">
+                      {irrigationNeed > 70
+                        ? 'Conditions sèches - arrosage fréquent nécessaire'
+                        : irrigationNeed > 40
+                        ? 'Conditions normales - arrosage quotidien'
+                        : 'Conditions humides - arrosage espacé'}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Horaires optimaux</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <Sun className="h-4 w-4 text-orange-500" />
+                        <span className="font-semibold">6h - 8h</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Sun className="h-4 w-4 text-yellow-500" />
+                        <span className="font-semibold">17h - 19h</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Évaporation minimale et absorption optimale
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Quantité estimée</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold mb-2 text-orange-600">
+                      {irrigationNeed > 70 ? '25-30' : irrigationNeed > 40 ? '15-20' : '8-12'}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">litres/m² par session</p>
+                    <p className="text-xs text-gray-500 mt-3">
+                      Total journalier: {irrigationNeed > 70 ? '50-60' : irrigationNeed > 40 ? '15-20' : '8-12'} L/m²
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="crops" className="space-y-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {crops.map((crop) => (
+                  <motion.div
+                    key={crop.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Card
+                      className={`cursor-pointer border-2 transition-all ${
+                        selectedCrop?.id === crop.id
+                          ? 'ring-2 ring-green-500 shadow-lg border-green-500'
+                          : 'hover:shadow-md hover:border-green-300'
+                      }`}
+                      onClick={() => setSelectedCrop(crop)}
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between mb-2">
+                          <Leaf className={`h-5 w-5 ${selectedCrop?.id === crop.id ? 'text-green-600' : 'text-gray-400'}`} />
+                          {selectedCrop?.id === crop.id && (
+                            <Badge className="bg-green-600">Sélectionné</Badge>
+                          )}
+                        </div>
+                        <CardTitle className="text-lg">{crop.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary" className="w-full justify-center">
+                          {crop.waterRequirements}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+
+              {selectedCrop && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sprout className="h-5 w-5 text-green-600" />
+                        {selectedCrop.name}
+                      </CardTitle>
+                      <CardDescription>Fiche technique de culture</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Plantation</p>
+                          <p className="font-semibold text-sm">{selectedCrop.plantingPeriod}</p>
+                        </div>
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Récolte</p>
+                          <p className="font-semibold text-sm">{selectedCrop.harvestPeriod}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg border-2 border-cyan-200 dark:border-cyan-800">
+                        <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                          <Droplets className="h-4 w-4 text-cyan-600" />
+                          Besoins en eau
+                        </p>
+                        <p className="text-sm mb-1">{selectedCrop.waterRequirements}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          Humidité du sol: {selectedCrop.idealConditions.soilMoisture}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg border-2 border-orange-200 dark:border-orange-800">
+                        <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                          <ThermometerSun className="h-4 w-4 text-orange-600" />
+                          Conditions idéales
+                        </p>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-gray-600 dark:text-gray-400 mb-1">Température</p>
+                            <p className="font-semibold">{selectedCrop.idealConditions.tempMin}-{selectedCrop.idealConditions.tempMax}°C</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 dark:text-gray-400 mb-1">Pluviométrie</p>
+                            <p className="font-semibold">{selectedCrop.idealConditions.rainfallMin}-{selectedCrop.idealConditions.rainfallMax}mm</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                          <Activity className="h-4 w-4" />
+                          Étapes de croissance
+                        </h4>
+                        <div className="space-y-2">
+                          {selectedCrop.growthStages.map((stage, index) => (
+                            <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border-l-4 border-green-500">
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="font-semibold text-sm">{stage.stage}</p>
+                                <Badge variant="outline" className="text-xs">{stage.duration}</Badge>
+                              </div>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                Irrigation: {stage.irrigation}
+                              </p>
+                              {stage.vulnerabilities.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {stage.vulnerabilities.map((vuln, i) => (
+                                    <Badge key={i} variant="secondary" className="text-xs">
+                                      {vuln}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Analyse de plantation
+                      </CardTitle>
+                      <CardDescription>Recommandations basées sur la météo actuelle</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {plantingRec && (
+                        <>
+                          <div
+                            className={`p-6 rounded-lg border-2 ${
+                              plantingRec.status === 'excellent'
+                                ? 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-500'
+                                : plantingRec.status === 'good'
+                                ? 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-500'
+                                : plantingRec.status === 'average'
+                                ? 'bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-500'
+                                : 'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-500'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                {plantingRec.status === 'excellent' && <span className="text-4xl">✓</span>}
+                                {plantingRec.status === 'good' && <span className="text-4xl">👍</span>}
+                                {plantingRec.status === 'average' && <span className="text-4xl">⚠</span>}
+                                {plantingRec.status === 'poor' && <span className="text-4xl">✗</span>}
+                                <div>
+                                  <p className="font-bold text-lg">{plantingRec.message}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">Score de viabilité</p>
+                                </div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-3xl font-bold">{plantingRec.score}</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">/100</div>
+                              </div>
+                            </div>
+                            <Progress value={plantingRec.score} className="h-3" />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-sm font-medium">Température actuelle</p>
+                                <ThermometerSun className="h-4 w-4 text-orange-600" />
+                              </div>
+                              <p className="text-2xl font-bold">
+                                {Math.round(
+                                  weather!.forecast.reduce((sum, day) => sum + (day.tempMax + day.tempMin) / 2, 0) /
+                                    weather!.forecast.length
+                                )}°C
+                              </p>
+                            </div>
+
+                            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-sm font-medium">Plage idéale</p>
+                                <Activity className="h-4 w-4 text-green-600" />
+                              </div>
+                              <p className="text-2xl font-bold">
+                                {selectedCrop.idealConditions.tempMin}-{selectedCrop.idealConditions.tempMax}°C
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <h5 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                              <Info className="h-4 w-4" />
+                              Facteurs analysés
+                            </h5>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600 dark:text-gray-400">Température moyenne</span>
+                                <span className={`font-semibold ${
+                                  Math.round(weather!.forecast.reduce((sum, day) => sum + (day.tempMax + day.tempMin) / 2, 0) / weather!.forecast.length) >= selectedCrop.idealConditions.tempMin &&
+                                  Math.round(weather!.forecast.reduce((sum, day) => sum + (day.tempMax + day.tempMin) / 2, 0) / weather!.forecast.length) <= selectedCrop.idealConditions.tempMax
+                                  ? 'text-green-600' : 'text-orange-600'
+                                }`}>
+                                  {Math.round(weather!.forecast.reduce((sum, day) => sum + (day.tempMax + day.tempMin) / 2, 0) / weather!.forecast.length) >= selectedCrop.idealConditions.tempMin &&
+                                   Math.round(weather!.forecast.reduce((sum, day) => sum + (day.tempMax + day.tempMin) / 2, 0) / weather!.forecast.length) <= selectedCrop.idealConditions.tempMax
+                                    ? 'Optimal' : 'Hors plage'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600 dark:text-gray-400">Précipitations prévues</span>
+                                <span className={`font-semibold ${
+                                  weather!.forecast.reduce((sum, day) => sum + day.precipitation, 0) > 10
+                                  ? 'text-green-600' : 'text-orange-600'
+                                }`}>
+                                  {weather!.forecast.reduce((sum, day) => sum + day.precipitation, 0) > 10 ? 'Suffisant' : 'Insuffisant'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600 dark:text-gray-400">Période de l'année</span>
+                                <span className="font-semibold text-blue-600">À vérifier</span>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="alerts" className="space-y-6">
+              <Card className="border-2">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-6 w-6 text-orange-600" />
+                        Alertes météo agricoles
+                      </CardTitle>
+                      <CardDescription>Notifications et actions recommandées pour protéger vos cultures</CardDescription>
+                    </div>
+                    {alerts.length > 0 && (
+                      <Badge variant="destructive" className="text-lg px-4 py-2">
+                        {alerts.length} {alerts.length === 1 ? 'alerte' : 'alertes'}
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {alerts.length > 0 ? (
+                    <div className="space-y-4">
+                      {alerts.map((alert, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          className={`p-5 rounded-lg border-l-4 ${
+                            alert.priority === 'high'
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                              : alert.priority === 'medium'
+                              ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500'
+                              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={`p-3 rounded-lg ${
+                              alert.priority === 'high'
+                                ? 'bg-red-100 dark:bg-red-900/40'
+                                : alert.priority === 'medium'
+                                ? 'bg-orange-100 dark:bg-orange-900/40'
+                                : 'bg-blue-100 dark:bg-blue-900/40'
+                            }`}>
+                              <alert.icon className={`h-6 w-6 ${
+                                alert.priority === 'high'
+                                  ? 'text-red-600'
+                                  : alert.priority === 'medium'
+                                  ? 'text-orange-600'
+                                  : 'text-blue-600'
+                              }`} />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <p className="font-bold text-lg">{alert.type}</p>
+                                <Badge
+                                  variant={alert.priority === 'high' ? 'destructive' : 'default'}
+                                  className="text-xs"
+                                >
+                                  {alert.priority === 'high' ? 'HAUTE PRIORITÉ' : alert.priority === 'medium' ? 'Priorité moyenne' : 'Info'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+                                {alert.message}
+                              </p>
+                              <div className="p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-start gap-2">
+                                  <TrendingUp className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">Action recommandée</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">{alert.action}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16">
+                      <div className="inline-block p-6 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                        <Activity className="h-12 w-12 text-green-600" />
+                      </div>
+                      <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                        Aucune alerte active
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                        Les conditions météorologiques sont favorables pour vos cultures.
+                        Continuez à suivre les prévisions régulièrement.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="subscription" className="space-y-6">
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle>Gestion de l'abonnement</CardTitle>
+                  <CardDescription>
+                    Accédez à la page complète de gestion des abonnements
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-8">
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Pour gérer votre abonnement, consulter les plans disponibles et modifier votre formule,
+                    rendez-vous sur la page dédiée aux abonnements.
+                  </p>
+                  <Button
+                    size="lg"
+                    onClick={() => window.location.href = '/subscription'}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600"
+                  >
+                    Gérer mon abonnement
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,105 @@
+[
+  {
+    "id": 1,
+    "name": "Parcelle Arachide Nord",
+    "crop": "Arachide",
+    "coordinates": [
+      [14.8086, -16.9461],
+      [14.8086, -16.9261],
+      [14.7886, -16.9261],
+      [14.7886, -16.9461]
+    ],
+    "area": 5.2,
+    "plantingDate": "2025-06-15",
+    "expectedHarvest": "2025-11-10",
+    "soilMoisture": 55,
+    "irrigationNeed": 65,
+    "alerts": [
+      {
+        "type": "info",
+        "message": "Arrosage recommandé dans 2 jours"
+      }
+    ],
+    "recommendations": {
+      "irrigation": "Modéré - 15-20 L/m²",
+      "timing": "Matin (6h-8h)",
+      "risk": "Faible"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Parcelle Mil Sud",
+    "crop": "Mil",
+    "coordinates": [
+      [14.7786, -16.9461],
+      [14.7786, -16.9261],
+      [14.7586, -16.9261],
+      [14.7586, -16.9461]
+    ],
+    "area": 3.8,
+    "plantingDate": "2025-06-20",
+    "expectedHarvest": "2025-10-25",
+    "soilMoisture": 45,
+    "irrigationNeed": 75,
+    "alerts": [
+      {
+        "type": "warning",
+        "message": "Stress hydrique détecté"
+      }
+    ],
+    "recommendations": {
+      "irrigation": "Élevé - 20-25 L/m²",
+      "timing": "Matin et soir",
+      "risk": "Moyen"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Parcelle Maïs Est",
+    "crop": "Maïs",
+    "coordinates": [
+      [14.8086, -16.9161],
+      [14.8086, -16.8961],
+      [14.7886, -16.8961],
+      [14.7886, -16.9161]
+    ],
+    "area": 4.5,
+    "plantingDate": "2025-06-25",
+    "expectedHarvest": "2025-10-15",
+    "soilMoisture": 68,
+    "irrigationNeed": 40,
+    "alerts": [],
+    "recommendations": {
+      "irrigation": "Faible - 10-12 L/m²",
+      "timing": "Fin d'après-midi",
+      "risk": "Faible"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Rizière Ouest",
+    "crop": "Riz",
+    "coordinates": [
+      [14.7786, -16.9161],
+      [14.7786, -16.8961],
+      [14.7586, -16.8961],
+      [14.7586, -16.9161]
+    ],
+    "area": 6.0,
+    "plantingDate": "2025-07-05",
+    "expectedHarvest": "2025-12-01",
+    "soilMoisture": 92,
+    "irrigationNeed": 25,
+    "alerts": [
+      {
+        "type": "success",
+        "message": "Conditions optimales"
+      }
+    ],
+    "recommendations": {
+      "irrigation": "Maintien du niveau - Inondation contrôlée",
+      "timing": "Continue",
+      "risk": "Très faible"
+    }
+  }
+]

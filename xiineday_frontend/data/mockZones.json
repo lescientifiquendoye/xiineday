@@ -1,0 +1,55 @@
+[
+  {
+    "id": 1,
+    "name": "Zone Dakar Centre",
+    "type": "polygon",
+    "coordinates": [
+      [14.7167, -17.4677],
+      [14.7167, -17.4277],
+      [14.6867, -17.4277],
+      [14.6867, -17.4677]
+    ],
+    "weatherData": {
+      "temp": 28,
+      "humidity": 75,
+      "windSpeed": 12,
+      "precipitation": 0,
+      "condition": "Ensoleillé",
+      "icon": "sun"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Zone Agricole Thiès",
+    "type": "polygon",
+    "coordinates": [
+      [14.8086, -16.9461],
+      [14.8086, -16.9061],
+      [14.7686, -16.9061],
+      [14.7686, -16.9461]
+    ],
+    "weatherData": {
+      "temp": 27,
+      "humidity": 72,
+      "windSpeed": 11,
+      "precipitation": 10,
+      "condition": "Partiellement nuageux",
+      "icon": "cloud-sun"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Zone Côtière Saint-Louis",
+    "type": "circle",
+    "center": [16.0173, -16.5096],
+    "radius": 15000,
+    "weatherData": {
+      "temp": 26,
+      "humidity": 68,
+      "windSpeed": 15,
+      "precipitation": 0,
+      "condition": "Ensoleillé",
+      "icon": "sun"
+    }
+  }
+]

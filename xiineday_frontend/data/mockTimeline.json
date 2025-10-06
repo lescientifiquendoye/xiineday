@@ -1,0 +1,134 @@
+[
+  {
+    "locationId": 1,
+    "location": "Dakar",
+    "hourlyForecast": [
+      {
+        "timestamp": "2025-10-04T06:00:00",
+        "hour": "06:00",
+        "temp": 24,
+        "humidity": 78,
+        "windSpeed": 8,
+        "precipitation": 0,
+        "condition": "Clair",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T09:00:00",
+        "hour": "09:00",
+        "temp": 26,
+        "humidity": 75,
+        "windSpeed": 10,
+        "precipitation": 0,
+        "condition": "Ensoleillé",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T12:00:00",
+        "hour": "12:00",
+        "temp": 28,
+        "humidity": 73,
+        "windSpeed": 12,
+        "precipitation": 0,
+        "condition": "Ensoleillé",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T15:00:00",
+        "hour": "15:00",
+        "temp": 29,
+        "humidity": 70,
+        "windSpeed": 13,
+        "precipitation": 5,
+        "condition": "Partiellement nuageux",
+        "icon": "cloud-sun"
+      },
+      {
+        "timestamp": "2025-10-04T18:00:00",
+        "hour": "18:00",
+        "temp": 27,
+        "humidity": 74,
+        "windSpeed": 11,
+        "precipitation": 10,
+        "condition": "Nuageux",
+        "icon": "cloud"
+      },
+      {
+        "timestamp": "2025-10-04T21:00:00",
+        "hour": "21:00",
+        "temp": 25,
+        "humidity": 76,
+        "windSpeed": 9,
+        "precipitation": 0,
+        "condition": "Clair",
+        "icon": "cloud-sun"
+      }
+    ]
+  },
+  {
+    "locationId": 2,
+    "location": "Saint-Louis",
+    "hourlyForecast": [
+      {
+        "timestamp": "2025-10-04T06:00:00",
+        "hour": "06:00",
+        "temp": 22,
+        "humidity": 70,
+        "windSpeed": 12,
+        "precipitation": 0,
+        "condition": "Clair",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T09:00:00",
+        "hour": "09:00",
+        "temp": 24,
+        "humidity": 68,
+        "windSpeed": 14,
+        "precipitation": 0,
+        "condition": "Ensoleillé",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T12:00:00",
+        "hour": "12:00",
+        "temp": 26,
+        "humidity": 66,
+        "windSpeed": 15,
+        "precipitation": 0,
+        "condition": "Ensoleillé",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T15:00:00",
+        "hour": "15:00",
+        "temp": 27,
+        "humidity": 65,
+        "windSpeed": 16,
+        "precipitation": 0,
+        "condition": "Ensoleillé",
+        "icon": "sun"
+      },
+      {
+        "timestamp": "2025-10-04T18:00:00",
+        "hour": "18:00",
+        "temp": 25,
+        "humidity": 67,
+        "windSpeed": 14,
+        "precipitation": 0,
+        "condition": "Clair",
+        "icon": "cloud-sun"
+      },
+      {
+        "timestamp": "2025-10-04T21:00:00",
+        "hour": "21:00",
+        "temp": 23,
+        "humidity": 69,
+        "windSpeed": 13,
+        "precipitation": 0,
+        "condition": "Clair",
+        "icon": "sun"
+      }
+    ]
+  }
+]

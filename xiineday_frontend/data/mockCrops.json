@@ -1,0 +1,186 @@
+[
+  {
+    "id": 1,
+    "name": "Arachide",
+    "plantingPeriod": "Juin - Juillet",
+    "harvestPeriod": "Octobre - Novembre",
+    "waterRequirements": "Modéré",
+    "idealConditions": {
+      "tempMin": 20,
+      "tempMax": 35,
+      "rainfallMin": 400,
+      "rainfallMax": 1200,
+      "soilMoisture": "40-70%"
+    },
+    "growthStages": [
+      {
+        "stage": "Semis",
+        "duration": "0-10 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Sécheresse"]
+      },
+      {
+        "stage": "Croissance végétative",
+        "duration": "10-40 jours",
+        "irrigation": "Modérée",
+        "vulnerabilities": ["Excès d'eau", "Vent fort"]
+      },
+      {
+        "stage": "Floraison",
+        "duration": "40-70 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Sécheresse", "Températures extrêmes"]
+      },
+      {
+        "stage": "Formation des gousses",
+        "duration": "70-100 jours",
+        "irrigation": "Modérée",
+        "vulnerabilities": ["Pluies excessives"]
+      },
+      {
+        "stage": "Maturation",
+        "duration": "100-120 jours",
+        "irrigation": "Faible",
+        "vulnerabilities": ["Pluies avant récolte"]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Mil",
+    "plantingPeriod": "Juin - Juillet",
+    "harvestPeriod": "Octobre - Novembre",
+    "waterRequirements": "Faible à modéré",
+    "idealConditions": {
+      "tempMin": 25,
+      "tempMax": 35,
+      "rainfallMin": 300,
+      "rainfallMax": 800,
+      "soilMoisture": "30-60%"
+    },
+    "growthStages": [
+      {
+        "stage": "Semis",
+        "duration": "0-7 jours",
+        "irrigation": "Modérée",
+        "vulnerabilities": ["Sécheresse initiale"]
+      },
+      {
+        "stage": "Tallage",
+        "duration": "7-30 jours",
+        "irrigation": "Modérée",
+        "vulnerabilities": ["Stress hydrique"]
+      },
+      {
+        "stage": "Montaison",
+        "duration": "30-60 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Sécheresse"]
+      },
+      {
+        "stage": "Épiaison",
+        "duration": "60-80 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Sécheresse", "Oiseaux"]
+      },
+      {
+        "stage": "Maturation",
+        "duration": "80-100 jours",
+        "irrigation": "Faible",
+        "vulnerabilities": ["Pluies tardives"]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Maïs",
+    "plantingPeriod": "Juin - Juillet",
+    "harvestPeriod": "Septembre - Octobre",
+    "waterRequirements": "Élevé",
+    "idealConditions": {
+      "tempMin": 18,
+      "tempMax": 32,
+      "rainfallMin": 500,
+      "rainfallMax": 1500,
+      "soilMoisture": "50-80%"
+    },
+    "growthStages": [
+      {
+        "stage": "Germination",
+        "duration": "0-10 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Sécheresse", "Froid"]
+      },
+      {
+        "stage": "Croissance végétative",
+        "duration": "10-50 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Stress hydrique", "Vent"]
+      },
+      {
+        "stage": "Floraison",
+        "duration": "50-70 jours",
+        "irrigation": "Très élevée",
+        "vulnerabilities": ["Sécheresse critique"]
+      },
+      {
+        "stage": "Remplissage des grains",
+        "duration": "70-100 jours",
+        "irrigation": "Élevée",
+        "vulnerabilities": ["Stress hydrique"]
+      },
+      {
+        "stage": "Maturation",
+        "duration": "100-120 jours",
+        "irrigation": "Faible",
+        "vulnerabilities": ["Excès d'humidité"]
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Riz",
+    "plantingPeriod": "Juillet - Août",
+    "harvestPeriod": "Novembre - Décembre",
+    "waterRequirements": "Très élevé",
+    "idealConditions": {
+      "tempMin": 20,
+      "tempMax": 35,
+      "rainfallMin": 1000,
+      "rainfallMax": 2000,
+      "soilMoisture": "80-100% (inondé)"
+    },
+    "growthStages": [
+      {
+        "stage": "Semis/Repiquage",
+        "duration": "0-15 jours",
+        "irrigation": "Très élevée",
+        "vulnerabilities": ["Manque d'eau"]
+      },
+      {
+        "stage": "Tallage",
+        "duration": "15-40 jours",
+        "irrigation": "Très élevée",
+        "vulnerabilities": ["Niveau d'eau inadéquat"]
+      },
+      {
+        "stage": "Montaison",
+        "duration": "40-65 jours",
+        "irrigation": "Très élevée",
+        "vulnerabilities": ["Sécheresse"]
+      },
+      {
+        "stage": "Épiaison",
+        "duration": "65-85 jours",
+        "irrigation": "Très élevée",
+        "vulnerabilities": ["Stress hydrique"]
+      },
+      {
+        "stage": "Maturation",
+        "duration": "85-120 jours",
+        "irrigation": "Modérée puis arrêt",
+        "vulnerabilities": ["Excès d'eau avant récolte"]
+      }
+    ]
+  }
+]

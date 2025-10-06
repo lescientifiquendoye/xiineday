@@ -1,0 +1,227 @@
+[
+  {
+    "id": 1,
+    "city": "Dakar",
+    "country": "Sénégal",
+    "coordinates": { "lat": 14.6937, "lon": -17.4441 },
+    "current": {
+      "temp": 28,
+      "feelsLike": 31,
+      "humidity": 75,
+      "windSpeed": 12,
+      "windDirection": "NE",
+      "pressure": 1013,
+      "precipitation": 0,
+      "condition": "Ensoleillé",
+      "icon": "sun",
+      "uvIndex": 8
+    },
+    "forecast": [
+      {
+        "date": "2025-10-05",
+        "day": "Dimanche",
+        "tempMin": 24,
+        "tempMax": 30,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 0,
+        "humidity": 70,
+        "windSpeed": 10
+      },
+      {
+        "date": "2025-10-06",
+        "day": "Lundi",
+        "tempMin": 25,
+        "tempMax": 31,
+        "condition": "Partiellement nuageux",
+        "icon": "cloud-sun",
+        "precipitation": 10,
+        "humidity": 72,
+        "windSpeed": 13
+      },
+      {
+        "date": "2025-10-07",
+        "day": "Mardi",
+        "tempMin": 26,
+        "tempMax": 32,
+        "condition": "Orageux",
+        "icon": "cloud-lightning",
+        "precipitation": 65,
+        "humidity": 80,
+        "windSpeed": 18
+      },
+      {
+        "date": "2025-10-08",
+        "day": "Mercredi",
+        "tempMin": 24,
+        "tempMax": 29,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 5,
+        "humidity": 68,
+        "windSpeed": 11
+      },
+      {
+        "date": "2025-10-09",
+        "day": "Jeudi",
+        "tempMin": 25,
+        "tempMax": 30,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 0,
+        "humidity": 65,
+        "windSpeed": 9
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "city": "Saint-Louis",
+    "country": "Sénégal",
+    "coordinates": { "lat": 16.0173, "lon": -16.5096 },
+    "current": {
+      "temp": 26,
+      "feelsLike": 28,
+      "humidity": 68,
+      "windSpeed": 15,
+      "windDirection": "N",
+      "pressure": 1015,
+      "precipitation": 0,
+      "condition": "Ensoleillé",
+      "icon": "sun",
+      "uvIndex": 7
+    },
+    "forecast": [
+      {
+        "date": "2025-10-05",
+        "day": "Dimanche",
+        "tempMin": 22,
+        "tempMax": 28,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 0,
+        "humidity": 65,
+        "windSpeed": 14
+      },
+      {
+        "date": "2025-10-06",
+        "day": "Lundi",
+        "tempMin": 23,
+        "tempMax": 29,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 0,
+        "humidity": 66,
+        "windSpeed": 16
+      },
+      {
+        "date": "2025-10-07",
+        "day": "Mardi",
+        "tempMin": 24,
+        "tempMax": 30,
+        "condition": "Nuageux",
+        "icon": "cloud",
+        "precipitation": 20,
+        "humidity": 72,
+        "windSpeed": 15
+      },
+      {
+        "date": "2025-10-08",
+        "day": "Mercredi",
+        "tempMin": 22,
+        "tempMax": 27,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 5,
+        "humidity": 64,
+        "windSpeed": 13
+      },
+      {
+        "date": "2025-10-09",
+        "day": "Jeudi",
+        "tempMin": 23,
+        "tempMax": 28,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 0,
+        "humidity": 62,
+        "windSpeed": 12
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "city": "Thiès",
+    "country": "Sénégal",
+    "coordinates": { "lat": 14.7886, "lon": -16.9261 },
+    "current": {
+      "temp": 27,
+      "feelsLike": 30,
+      "humidity": 72,
+      "windSpeed": 11,
+      "windDirection": "NW",
+      "pressure": 1014,
+      "precipitation": 0,
+      "condition": "Partiellement nuageux",
+      "icon": "cloud-sun",
+      "uvIndex": 7
+    },
+    "forecast": [
+      {
+        "date": "2025-10-05",
+        "day": "Dimanche",
+        "tempMin": 23,
+        "tempMax": 29,
+        "condition": "Partiellement nuageux",
+        "icon": "cloud-sun",
+        "precipitation": 10,
+        "humidity": 70,
+        "windSpeed": 10
+      },
+      {
+        "date": "2025-10-06",
+        "day": "Lundi",
+        "tempMin": 24,
+        "tempMax": 30,
+        "condition": "Nuageux",
+        "icon": "cloud",
+        "precipitation": 25,
+        "humidity": 75,
+        "windSpeed": 12
+      },
+      {
+        "date": "2025-10-07",
+        "day": "Mardi",
+        "tempMin": 25,
+        "tempMax": 31,
+        "condition": "Pluvieux",
+        "icon": "cloud-rain",
+        "precipitation": 70,
+        "humidity": 82,
+        "windSpeed": 16
+      },
+      {
+        "date": "2025-10-08",
+        "day": "Mercredi",
+        "tempMin": 23,
+        "tempMax": 28,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 5,
+        "humidity": 68,
+        "windSpeed": 10
+      },
+      {
+        "date": "2025-10-09",
+        "day": "Jeudi",
+        "tempMin": 24,
+        "tempMax": 29,
+        "condition": "Ensoleillé",
+        "icon": "sun",
+        "precipitation": 0,
+        "humidity": 66,
+        "windSpeed": 9
+      }
+    ]
+  }
+]
